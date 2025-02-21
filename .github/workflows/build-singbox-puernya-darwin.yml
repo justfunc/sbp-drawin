@@ -5,6 +5,8 @@ on:
       - main
     paths-ignore:
       - "README.md"
+      - ".github/workflows/delete-old-workflows.yml"
+      - ".github/workflows/update-*.yml"
 
 jobs:
   go:
@@ -110,11 +112,8 @@ jobs:
       - name: Package binaries
         run: |
           mkdir -p release
-          # 处理arm64
           mv artifacts/sing-box-darwin-arm64/sing-box release/sing-box-arm64
-          # 处理amd64
           mv artifacts/sing-box-darwin-amd64/sing-box release/sing-box-amd64
-          
           chmod +x release/*
           tar -czvf release/sing-box-puernya-darwin-arm64.tar.gz -C release sing-box-arm64
           tar -czvf release/sing-box-puernya-darwin-amd64.tar.gz -C release sing-box-amd64
@@ -130,6 +129,6 @@ jobs:
             🔸 版本号: ${{ needs.puernya.outputs.puernya_version }}
             📆 构建时间: ${{ needs.puernya.outputs.puernya_time }}
             🛠️ 支持特性: 
-            ${{ join(fromJson('["' + replace(needs.puernya.outputs.puernya_tags, ',', '","') + '"]'), '\n- ') | indent(2) }}
+            - ${{ join(fromJson(format('["{0}"]', replace(needs.puernya.outputs.puernya_tags, ',', '","')), '"\n- "') }}
           files: |
             release/sing-box-puernya-darwin-*.tar.gz

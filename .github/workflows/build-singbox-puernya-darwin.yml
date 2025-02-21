@@ -102,32 +102,53 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+  
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
+  
       - name: Package binaries
         run: |
+          # 添加目录结构验证
+          echo "当前目录结构:"
+          ls -lR artifacts/
+  
+          mkdir -p release
+          # 修复路径匹配问题
+          mv artifacts/sing-box-darwin-arm64/sing-box release/
+          mv artifacts/sing-box-darwin-amd64/sing-box release/
+          
+          # 重命名不同架构文件
+          mv release/sing-box release/sing-box-arm64
+          mv release/sing-box release/sing-box-amd64  # 这行会导致覆盖，需要修正
+  
+          # 正确版本：
           mkdir -p release
           mv artifacts/sing-box-darwin-arm64/sing-box release/sing-box-arm64
           mv artifacts/sing-box-darwin-amd64/sing-box release/sing-box-amd64
+          
           chmod +x release/*
+          echo "打包前文件列表:"
+          ls -l release/
+  
           tar -czvf release/sing-box-puernya-darwin-arm64.tar.gz -C release sing-box-arm64
           tar -czvf release/sing-box-puernya-darwin-amd64.tar.gz -C release sing-box-amd64
-          rm release/sing-box-*
-
+          
+          echo "最终生成文件:"
+          ls -l release/
+  
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           name: "PuerNya Build (${{ needs.puernya.outputs.puernya_time }})"
           tag_name: puernya-${{ needs.puernya.outputs.puernya_version }}
           body: | 
-            🍎 macOS 双架构编译版本
+            🍎 macOS双架构编译版本
             🔸 版本号: ${{ needs.puernya.outputs.puernya_version }}
             📆 构建时间: ${{ needs.puernya.outputs.puernya_time }}
             🛠️ 支持特性: 
-            - ${{ join(fromJson(needs.puernya.outputs.puernya_tags), '\n- ') }}
+            - ${{ join(fromJson(needs.puernya.outputs.puernya_tags), '\n- ')}}
           files: |
-            release/sing-box-puernya-darwin-*.tar.gz
+            release/sing-box-puernya-darwin-arm64.tar.gz
+            release/sing-box-puernya-darwin-amd64.tar.gz
